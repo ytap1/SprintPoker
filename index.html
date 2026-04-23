@@ -703,26 +703,47 @@ function hostRoom(name, deck, timer) {
 }
 
 /* ── Client: join ── */
+function resetJoinBtn() {
+  const btn = document.getElementById('btn-join');
+  btn.disabled = false;
+  btn.textContent = '→ Join Room';
+}
+
 function joinRoom(name, code) {
   state.myName = name;
   state.isFacilitator = false;
   state.roomCode = code;
 
+  const joinTimeout = setTimeout(() => {
+    if (peer && !peer.destroyed) peer.destroy();
+    showError('join-error', 'Room not found or host disconnected. Check the code and try again.');
+    resetJoinBtn();
+  }, 10000);
+
   peer = new Peer(undefined, { debug: 0 });
   peer.on('open', () => {
     facilitatorConn = peer.connect(code, { reliable: true });
     facilitatorConn.on('open', () => {
+      clearTimeout(joinTimeout);
       setConnStatus('connected');
       facilitatorConn.send({ type: 'JOIN', payload: { name } });
       enterGame();
     });
     facilitatorConn.on('data', msg => handleClientMessage(msg));
     facilitatorConn.on('close', () => setConnStatus('disconnected'));
-    facilitatorConn.on('error', () => setConnStatus('disconnected'));
+    facilitatorConn.on('error', () => {
+      clearTimeout(joinTimeout);
+      showError('join-error', 'Room not found or host disconnected. Check the code and try again.');
+      resetJoinBtn();
+    });
   });
   peer.on('error', e => {
-    if (e.type === 'peer-unavailable') showError('join-error', 'Room not found. Check the code.');
-    else showError('join-error', 'Error: ' + e.type);
+    clearTimeout(joinTimeout);
+    const msg = e.type === 'peer-unavailable'
+      ? 'Room not found or host disconnected. Check the code and try again.'
+      : 'Connection error: ' + e.type + '. Try again.';
+    showError('join-error', msg);
+    resetJoinBtn();
   });
 }
 
