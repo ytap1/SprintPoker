@@ -1079,7 +1079,7 @@ function renderResults() {
     return;
   }
 
-  panel.style.display = '';
+  panel.style.display = 'block';
   deckSection.style.display = 'none';
 
   const votes = Object.values(state.votes).filter(Boolean);
@@ -1139,7 +1139,7 @@ function updateVoteCount() {
 function enterGame() {
   state.phase = 'game';
   document.getElementById('lobby').style.display = 'none';
-  document.getElementById('game').style.display = '';
+  document.getElementById('game').style.display = 'block';
   document.getElementById('header-lobby-info').classList.add('hidden');
   document.getElementById('header-game-info').classList.remove('hidden');
   document.getElementById('header-room-code').textContent = state.roomCode;
