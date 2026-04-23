@@ -672,11 +672,10 @@ function hostRoom(name, deck, timer) {
   state.roomCode = genCode();
   state.participants[name] = { isFacilitator: true };
 
-  enterGame();
-
   peer = new Peer(state.roomCode, { debug: 0 });
   peer.on('open', () => {
     setConnStatus('connected');
+    enterGame();
   });
   peer.on('connection', conn => {
     conn.on('open', () => {
