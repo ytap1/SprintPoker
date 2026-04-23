@@ -72,9 +72,10 @@ body {
   text-transform: uppercase;
   font-weight: 600;
 }
-.phase-waiting { background: rgba(255,255,255,.07); color: var(--muted); }
-.phase-voting  { background: rgba(124,106,247,.15); color: var(--accent2); }
-.phase-revealed{ background: rgba(74,222,128,.12); color: var(--green); }
+.phase-waiting  { background: rgba(255,255,255,.07); color: var(--muted); }
+.phase-voting   { background: rgba(124,106,247,.15); color: var(--accent2); }
+.phase-revealed { background: rgba(74,222,128,.12); color: var(--green); }
+.phase-done     { background: rgba(74,222,128,.12); color: var(--green); }
 
 /* ── MAIN ─────────────────────────────────────── */
 main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
@@ -845,6 +846,17 @@ function doRevote() {
   broadcastToClients({ type: 'SYNC', payload: getSyncPayload() });
 }
 
+function resetSession() {
+  if (!state.isFacilitator) return;
+  state.gamePhase = 'waiting';
+  state.votes = {};
+  state.currentIssueIdx = -1;
+  state.issues.forEach(i => { i.points = null; });
+  stopTimer();
+  renderAll();
+  broadcastToClients({ type: 'SYNC', payload: getSyncPayload() });
+}
+
 function nextIssue(assignedPts) {
   if (!state.isFacilitator) return;
   if (state.currentIssueIdx >= 0 && assignedPts != null) {
@@ -860,6 +872,7 @@ function nextIssue(assignedPts) {
     broadcastToClients({ type: 'SYNC', payload: getSyncPayload() });
     setTimeout(() => startVoting(next), 400);
   } else {
+    state.gamePhase = 'done';
     renderAll();
     broadcastToClients({ type: 'SYNC', payload: getSyncPayload() });
   }
@@ -1074,6 +1087,25 @@ function renderResults() {
   const panel = document.getElementById('results-panel');
   const deckSection = document.getElementById('deck-section');
 
+  if (state.gamePhase === 'done') {
+    panel.style.display = 'block';
+    deckSection.style.display = 'none';
+    document.getElementById('res-avg').textContent = '—';
+    const consEl = document.getElementById('res-consensus');
+    consEl.textContent = '—';
+    consEl.className = 'svalue';
+    document.getElementById('res-count').textContent = '—';
+    document.getElementById('dist-list').innerHTML =
+      '<div style="text-align:center;padding:16px 0;font-size:15px;font-weight:700;color:var(--green)">✓ All issues estimated!</div>';
+    const actions = document.getElementById('result-actions');
+    if (state.isFacilitator) {
+      actions.innerHTML = '<button class="btn-success" style="width:100%" onclick="resetSession()">↺ Start new session</button>';
+    } else {
+      actions.innerHTML = '<span style="font-size:12px;color:var(--muted)">Session complete</span>';
+    }
+    return;
+  }
+
   if (state.gamePhase !== 'revealed') {
     panel.style.display = 'none';
     deckSection.style.display = '';
@@ -1110,7 +1142,7 @@ function renderResults() {
   // Actions
   const actions = document.getElementById('result-actions');
   if (state.isFacilitator) {
-    const suggestedPts = isConsensus && votes[0] ? votes[0] : (avg !== '—' ? avg : null);
+    const suggestedPts = isConsensus && Object.values(state.votes).filter(Boolean)[0] ? Object.values(state.votes).filter(Boolean)[0] : (avg !== '—' ? avg : null);
     actions.innerHTML = `
       <button class="btn-secondary" onclick="doRevote()">↩ Re-vote</button>
       <button class="btn-success" onclick="nextIssue(${JSON.stringify(suggestedPts)})">Accept & Next →</button>`;
