@@ -8,7 +8,15 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- (nothing yet)
+
+## [0.3.1] — 2026-04-24
+
+### Added
 - "Copy Join Link" button in QR modal: copies the full `?code=` join URL to clipboard; button text changes to "✓ Copied!" for 2 seconds then reverts
+
+### Fixed
+- Removed stale `console.log` debug statement left in `nextIssue()`
 
 ## [0.3.0] — 2026-04-24
 
@@ -73,7 +81,8 @@ Initial working release of Sprint Poker.
 - Join button permanently stuck on "JOINING…" — all error paths (peer error, connection error, 10 s timeout) now re-enable the button and show a descriptive message
 - PeerJS host errors after lobby was hidden were silently dropped — changed from `showError('create-error', …)` to `toast(…)`
 
-[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/ytap1/SprintPoker/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/ytap1/SprintPoker/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ytap1/SprintPoker/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/ytap1/SprintPoker/compare/v0.1.0...v0.1.1

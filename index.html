@@ -1064,7 +1064,6 @@ function resetSession() {
 }
 
 function nextIssue(assignedPts) {
-  console.log('[nextIssue] called with', assignedPts, '| idx', state.currentIssueIdx, '| total', state.issues.length);
   if (!state.isFacilitator) return;
   if (state.currentIssueIdx >= 0 && assignedPts != null) {
     state.issues[state.currentIssueIdx].points = assignedPts;

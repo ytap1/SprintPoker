@@ -142,10 +142,10 @@ All state is in-memory. A page refresh ejects the user from the session. There i
 
 ~~6. Export backlog to CSV~~ ✓ Done (v0.2.0)
 
-7. **Guard against name collisions** — Reject a `JOIN` message if the name already exists in `state.participants`, and send an error back to the client before `enterGame()` is called.
+~~7. QR code + copy join link~~ ✓ Done (v0.3.0 / v0.3.1) — facilitator taps the room code badge to open a QR modal; team members scan to auto-fill the join URL; `?code=` URL parameter supported for direct sharing; "Copy Join Link" button in modal copies the full URL to clipboard.
 
-8. **Deploy self-hosted PeerJS server** — Railway or Render, steps in §4 above. Eliminates free-tier rate limiting.
+8. **Guard against name collisions** — Reject a `JOIN` message if the name already exists in `state.participants`, and send an error back to the client before `enterGame()` is called. Highest-priority open item.
 
-9. **Add TURN credentials** — Metered free tier or Cloudflare Calls. Steps in §4 above. Fixes symmetric-NAT failures.
+9. **Deploy self-hosted PeerJS server** — Railway or Render, steps in §4 above. Eliminates free-tier rate limiting.
 
-10. **QR code deployed** (v0.3.0) — facilitator taps the room code badge to open a QR modal; team members scan to auto-fill the join URL; `?code=` URL parameter supported for direct sharing.
+10. **Add TURN credentials** — Metered free tier or Cloudflare Calls. Steps in §4 above. Fixes symmetric-NAT failures.
