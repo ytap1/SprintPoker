@@ -12,8 +12,8 @@ Sprint Poker is a serverless, real-time planning poker tool for agile teams. One
 |---|---|
 | **Single file** | `index.html` — CSS, HTML, and JS all inline, no build step |
 | **WebRTC signalling** | PeerJS 1.5.4 via CDN (`unpkg.com/peerjs@1.5.4`) |
-| **ICE / STUN** | PeerJS default (Google STUN `stun.l.google.com:19302`) |
-| **Signalling server** | PeerJS free cloud (`0.peerjs.com`) |
+| **ICE / STUN** | Google STUN by default; TURN credentials added via `PEER_CONFIG.iceServers` |
+| **Signalling server** | PeerJS free cloud (`0.peerjs.com`) by default; swap via `PEER_CONFIG.signalling` in `index.html` |
 | **Hosting** | GitHub Pages — auto-deploys on push to `main` |
 | **Framework** | None — vanilla JS, CSS custom properties |
 
@@ -86,11 +86,27 @@ Any join failure — `peer-unavailable`, WebRTC/ICE error, or signalling timeout
 
 ## 4. Known Remaining Issues / Limitations
 
-### No TURN server
-PeerJS uses Google STUN only. Connections across symmetric NATs (corporate networks, some mobile carriers) can fail silently. WebRTC ICE will stall indefinitely with no error message if STUN can't negotiate a path. A TURN relay is required for reliable cross-network connections.
+### ~~No TURN server~~ ✓ Config ready in v0.2.0 (credentials still needed)
+`PEER_CONFIG.iceServers` in `index.html` ships with Google STUN. To add TURN:
 
-### PeerJS free cloud reliability
-`0.peerjs.com` is rate-limited and occasionally unavailable. There is no fallback signalling server configured. Either peer can fail to connect without a clear error surfaced to the user.
+1. Create a free account at [metered.ca](https://www.metered.ca/tools/openrelay/) or use [Cloudflare Calls TURN](https://developers.cloudflare.com/calls/turn/).
+2. Uncomment and populate the `turn:` / `turns:` lines in `PEER_CONFIG.iceServers`.
+3. Push to `main` — no other changes needed.
+
+Until TURN credentials are added, symmetric-NAT failures (corporate WiFi, some mobile carriers) remain possible.
+
+### ~~PeerJS free cloud reliability~~ ✓ Config ready in v0.2.0 (server not yet deployed)
+`PEER_CONFIG.signalling` is `null` by default (still uses `0.peerjs.com`). To switch to a self-hosted server:
+
+**Railway (recommended):**
+1. Fork or clone [peer-server](https://github.com/peers/peerjs-server) on GitHub.
+2. In Railway dashboard → New Project → Deploy from GitHub repo.
+3. Set the `PORT` env var (Railway injects `$PORT` automatically via the Procfile).
+4. Copy the generated URL (e.g. `your-app.railway.app`).
+5. In `PEER_CONFIG.signalling` in `index.html`: `{ host: 'your-app.railway.app', port: 443, path: '/', secure: true }`.
+6. Push to `main`.
+
+**Render (alternative):** same steps; use the Render dashboard → Web Service → from repo.
 
 ### ~~Facilitator peer not reconnected on signalling drop~~ ✓ Fixed in v0.1.1
 `peer.on('disconnected')` now calls `peer.reconnect()`. Recoverable error types (`network`, `server-error`) also trigger reconnect. `peer.on('open')` is guarded so a reconnect re-open doesn't re-enter the game.
@@ -120,6 +136,14 @@ All state is in-memory. A page refresh ejects the user from the session. There i
 
 ~~3. Add responsive layout~~ ✓ Done (v0.1.1)
 
-4. **Use a reliable signalling / TURN setup** — Options (all free tier available): self-hosted `peer-server` on Railway/Render, Metered TURN (free quota), or Cloudflare Calls for TURN relay. Configure via the `config.iceServers` option in the `Peer` constructor.
+~~4. Self-hosted PeerJS signalling~~ ✓ Config ready (v0.2.0) — deploy steps in §4 above
 
-5. **Guard against name collisions** — Reject a `JOIN` message if the name already exists in `state.participants`, and send an error back to the client before `enterGame()` is called.
+~~5. TURN relay~~ ✓ Config ready (v0.2.0) — add credentials per §4 above
+
+~~6. Export backlog to CSV~~ ✓ Done (v0.2.0)
+
+7. **Guard against name collisions** — Reject a `JOIN` message if the name already exists in `state.participants`, and send an error back to the client before `enterGame()` is called.
+
+8. **Deploy self-hosted PeerJS server** — Railway or Render, steps in §4 above. Eliminates free-tier rate limiting.
+
+9. **Add TURN credentials** — Metered free tier or Cloudflare Calls. Steps in §4 above. Fixes symmetric-NAT failures.

@@ -10,6 +10,16 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 ### Added
 - (nothing yet)
 
+## [0.2.0] — 2026-04-24
+
+### Added
+- `PEER_CONFIG` object at the top of the script — one place to configure the signalling server and ICE/TURN servers; no hunting through code to switch providers
+- `buildPeerOpts()` helper wires `PEER_CONFIG` into both `hostRoom()` and `joinRoom()`; hardcoded `{ debug: 0 }` replaced in both
+- Self-hosted PeerJS signalling support: set `PEER_CONFIG.signalling` to `{ host, port, path, secure }` to point at a Railway/Render instance; `null` keeps the current PeerJS free-cloud default
+- TURN relay config: `PEER_CONFIG.iceServers` ships Google STUN by default; commented examples for Metered and Cloudflare Calls TURN relays are ready to uncomment
+- Export CSV: facilitator-only "↓ Export Results CSV" button in the backlog panel, visible once at least one issue is pointed; downloads `sprint-results-<roomcode>.csv` with columns `#`, `Title`, `Points`; values with commas/quotes are properly escaped
+- ADR-0006: documents the configurable signalling/TURN decision
+
 ## [0.1.1] — 2026-04-24
 
 ### Fixed
@@ -48,6 +58,7 @@ Initial working release of Sprint Poker.
 - Join button permanently stuck on "JOINING…" — all error paths (peer error, connection error, 10 s timeout) now re-enable the button and show a descriptive message
 - PeerJS host errors after lobby was hidden were silently dropped — changed from `showError('create-error', …)` to `toast(…)`
 
-[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ytap1/SprintPoker/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/ytap1/SprintPoker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ytap1/SprintPoker/releases/tag/v0.1.0
