@@ -878,6 +878,7 @@ function resetSession() {
 }
 
 function nextIssue(assignedPts) {
+  console.log('[nextIssue] called with', assignedPts, '| idx', state.currentIssueIdx, '| total', state.issues.length);
   if (!state.isFacilitator) return;
   if (state.currentIssueIdx >= 0 && assignedPts != null) {
     state.issues[state.currentIssueIdx].points = assignedPts;
@@ -1162,10 +1163,14 @@ function renderResults() {
   // Actions
   const actions = document.getElementById('result-actions');
   if (state.isFacilitator) {
-    const suggestedPts = isConsensus && Object.values(state.votes).filter(Boolean)[0] ? Object.values(state.votes).filter(Boolean)[0] : (avg !== '—' ? avg : null);
-    actions.innerHTML = `
-      <button class="btn-secondary" onclick="doRevote()">↩ Re-vote</button>
-      <button class="btn-success" onclick="nextIssue(${JSON.stringify(suggestedPts)})">Accept & Next →</button>`;
+    const suggestedPts = isConsensus && Object.values(state.votes).filter(Boolean)[0]
+      ? Object.values(state.votes).filter(Boolean)[0]
+      : (avg !== '—' ? avg : null);
+    actions.innerHTML =
+      '<button class="btn-secondary" id="btn-revote">↩ Re-vote</button>' +
+      '<button class="btn-success" id="btn-accept-next">Accept &amp; Next →</button>';
+    document.getElementById('btn-revote').addEventListener('click', doRevote);
+    document.getElementById('btn-accept-next').addEventListener('click', () => nextIssue(suggestedPts));
   } else {
     actions.innerHTML = '<span style="font-size:12px;color:var(--muted)">Waiting for facilitator...</span>';
   }
