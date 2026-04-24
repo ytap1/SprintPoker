@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Sprint Poker</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -450,21 +451,105 @@ main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
 /* empty state */
 .empty { text-align: center; color: var(--muted); font-size: 12px; padding: 16px 0; font-style: italic; }
 
+/* ── QR MODAL ─────────────────────────────────── */
+#qr-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#qr-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.72);
+}
+#qr-box {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--rl);
+  padding: 28px 24px 20px;
+  text-align: center;
+  width: 264px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.qr-modal-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+#qr-canvas { line-height: 0; }
+#qr-canvas canvas { display: none; }
+#qr-canvas img { border-radius: 6px; display: block; }
+.qr-modal-url { font-size: 10px; color: var(--muted); word-break: break-all; line-height: 1.5; max-width: 216px; }
+#qr-close {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 9px 20px;
+  min-height: 36px;
+  width: 100%;
+  transition: all .15s;
+}
+#qr-close:hover { border-color: var(--accent); color: var(--accent2); }
+
 /* ── RESPONSIVE ───────────────────────────────── */
 @media (max-width: 768px) {
-  main { padding: 20px 16px; }
+  main { padding: 16px 12px; }
 
-  #app-header { padding: 10px 16px; flex-wrap: wrap; gap: 8px; }
-  .header-right { flex-wrap: wrap; gap: 8px; }
+  /* Header — keep room code + phase only */
+  #app-header { padding: 10px 14px; gap: 8px; flex-wrap: wrap; }
+  .header-right { gap: 8px; flex-wrap: wrap; }
+  #conn-label { display: none; }
+  #my-name-label { display: none; }
 
+  /* Lobby */
+  #lobby { min-height: auto; padding: 24px 0; gap: 24px; }
+  .lobby-hero h1 { font-size: 24px; }
   .lobby-panels { flex-direction: column; align-items: stretch; }
-  .panel { width: 100%; }
+  .panel { width: 100%; padding: 20px; }
 
+  /* Tap targets ≥ 44px */
+  .btn-primary  { min-height: 44px; padding: 13px 16px; font-size: 14px; }
+  .btn-reveal   { min-height: 44px; padding: 13px; }
+  .btn-secondary { min-height: 44px; padding: 12px; }
+  .btn-success  { min-height: 44px; padding: 12px; }
+  .toggle-btn   { min-height: 44px; }
+  .form-field input,
+  .form-field select { min-height: 44px; padding: 12px; font-size: 16px; }
+
+  /* Game grid — sidebar below main */
   .game-grid { grid-template-columns: 1fr; }
-  .game-col-side { order: -1; }
+  .game-col-main { order: 1; }
+  .game-col-side { order: 2; }
 
-  .vote-card { width: 52px; height: 74px; font-size: 16px; }
+  /* Voting cards — 5 per row on 390px without overflow */
+  .deck-grid { gap: 8px; }
+  .vote-card {
+    width: 52px; height: 74px;
+    font-size: 15px; border-radius: 8px;
+    touch-action: manipulation;
+  }
   .vote-card.special { font-size: 12px; }
+
+  /* Results — stack stats vertically */
+  .results-stats { flex-direction: column; gap: 8px; }
+  .stat-box {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    text-align: left; padding: 10px 16px;
+  }
+  .stat-box .slabel { margin-bottom: 0; }
+  .stat-box .svalue { font-size: 22px; }
+  .result-actions { flex-direction: column; gap: 10px; }
+  .result-actions > * { flex: none; width: 100%; }
 }
 
 /* toast */
@@ -639,6 +724,17 @@ main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
     </div>
   </section>
 </main>
+
+<!-- QR Code Modal — facilitator only, shown on room code click -->
+<div id="qr-modal" class="hidden" role="dialog" aria-modal="true" aria-label="QR code to join room">
+  <div id="qr-overlay"></div>
+  <div id="qr-box">
+    <div class="qr-modal-title">Scan to join</div>
+    <div id="qr-canvas"></div>
+    <div class="qr-modal-url" id="qr-url-text"></div>
+    <button id="qr-close">✕ Close</button>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -1302,6 +1398,7 @@ function enterGame() {
 
   if (state.isFacilitator) {
     state.votes[state.myName] = null;
+    setupQRCode();
   }
 
   renderAll();
@@ -1312,6 +1409,21 @@ function setConnStatus(s) {
   const label = document.getElementById('conn-label');
   dot.className = 'conn-dot ' + s;
   label.textContent = s;
+}
+
+function setupQRCode() {
+  const container = document.getElementById('qr-canvas');
+  container.innerHTML = '';
+  const url = 'https://ytap1.github.io/SprintPoker/?code=' + state.roomCode;
+  document.getElementById('qr-url-text').textContent = url;
+  new QRCode(container, {
+    text: url,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
 }
 
 /* ═══════════════════════════════════════════════
@@ -1389,11 +1501,28 @@ document.getElementById('join-code').addEventListener('input', e => {
 // Export CSV
 document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
 
-// Copy room code
+// Room code — QR modal for facilitator, copy-to-clipboard for clients
 document.getElementById('header-room-code').addEventListener('click', () => {
-  navigator.clipboard.writeText(state.roomCode).catch(()=>{});
-  toast('Room code copied!');
+  if (state.isFacilitator) {
+    document.getElementById('qr-modal').classList.remove('hidden');
+  } else {
+    navigator.clipboard.writeText(state.roomCode).catch(()=>{});
+    toast('Room code copied!');
+  }
 });
+
+// QR modal close
+document.getElementById('qr-close').addEventListener('click', () =>
+  document.getElementById('qr-modal').classList.add('hidden'));
+document.getElementById('qr-overlay').addEventListener('click', () =>
+  document.getElementById('qr-modal').classList.add('hidden'));
+
+// Pre-fill join code from ?code= URL parameter (QR scan entry point)
+const urlCode = new URLSearchParams(window.location.search).get('code');
+if (urlCode) {
+  document.getElementById('join-code').value = urlCode.toUpperCase();
+  document.getElementById('join-name').focus();
+}
 
 // Game buttons
 document.getElementById('btn-start-voting').addEventListener('click', () => {

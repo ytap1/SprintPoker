@@ -111,6 +111,33 @@ The facilitator's browser is the single source of truth. Clients send `JOIN` and
 
 ---
 
+## ADR-0007: qrcode.js CDN for QR code generation
+
+- **Date:** 2026-04-24
+- **Status:** Accepted
+
+### Context
+
+Facilitators need a fast way to share the join URL with mobile team members. Typing an 8-character room code is error-prone on a phone keyboard; a QR code encoding the direct join URL (`?code=SP-XXXXXX`) solves this with a single scan.
+
+### Decision
+
+Use `qrcode.js` 1.0.0 from cdnjs. The library is ~3 KB, pure-JS, dependency-free, renders synchronously into a DOM element, and requires no build step. It is loaded alongside PeerJS in `<head>`.
+
+### Alternatives Considered
+
+- **Implementing Reed-Solomon QR encoding from scratch:** hundreds of lines out of scope.
+- **Google Charts QR API:** deprecated since 2019.
+- **`qrcode-generator` (npm):** requires a build step — violates ADR-0002.
+
+### Consequences
+
+- **Positive:** one-tap mobile join via QR; no server round-trip; library loads from cdnjs alongside PeerJS.
+- **Negative:** adds a second CDN dependency. Risk is low — cdnjs has high availability and the payload is tiny. No impact on users who don't scan the code.
+- **Follow-ups:** none.
+
+---
+
 ## ADR-0006: Configurable PeerJS signalling server and TURN relay
 
 - **Date:** 2026-04-24
