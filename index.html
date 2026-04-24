@@ -499,6 +499,23 @@ main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
   transition: all .15s;
 }
 #qr-close:hover { border-color: var(--accent); color: var(--accent2); }
+#qr-copy-link {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--r);
+  color: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 9px 20px;
+  min-height: 36px;
+  width: 100%;
+  transition: all .15s;
+}
+#qr-copy-link:hover { background: var(--accent2); }
 
 /* ── RESPONSIVE ───────────────────────────────── */
 @media (max-width: 768px) {
@@ -732,6 +749,7 @@ main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
     <div class="qr-modal-title">Scan to join</div>
     <div id="qr-canvas"></div>
     <div class="qr-modal-url" id="qr-url-text"></div>
+    <button id="qr-copy-link">Copy Join Link</button>
     <button id="qr-close">✕ Close</button>
   </div>
 </div>
@@ -1516,6 +1534,15 @@ document.getElementById('qr-close').addEventListener('click', () =>
   document.getElementById('qr-modal').classList.add('hidden'));
 document.getElementById('qr-overlay').addEventListener('click', () =>
   document.getElementById('qr-modal').classList.add('hidden'));
+
+// QR modal copy join link
+document.getElementById('qr-copy-link').addEventListener('click', () => {
+  const url = document.getElementById('qr-url-text').textContent;
+  navigator.clipboard.writeText(url).catch(() => {});
+  const btn = document.getElementById('qr-copy-link');
+  btn.textContent = '✓ Copied!';
+  setTimeout(() => { btn.textContent = 'Copy Join Link'; }, 2000);
+});
 
 // Pre-fill join code from ?code= URL parameter (QR scan entry point)
 const urlCode = new URLSearchParams(window.location.search).get('code');

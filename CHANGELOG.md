@@ -8,7 +8,7 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-- (nothing yet)
+- "Copy Join Link" button in QR modal: copies the full `?code=` join URL to clipboard; button text changes to "✓ Copied!" for 2 seconds then reverts
 
 ## [0.3.0] — 2026-04-24
 
