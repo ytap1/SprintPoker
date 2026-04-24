@@ -92,17 +92,17 @@ PeerJS uses Google STUN only. Connections across symmetric NATs (corporate netwo
 ### PeerJS free cloud reliability
 `0.peerjs.com` is rate-limited and occasionally unavailable. There is no fallback signalling server configured. Either peer can fail to connect without a clear error surfaced to the user.
 
-### Facilitator peer not reconnected on signalling drop
-`peer.on('disconnected', ...)` is never handled for the facilitator. If the WebSocket to the PeerJS signalling server times out (common after a few minutes of idle), the facilitator's peer ID is deregistered and the room is silently unjoinable. `peer.reconnect()` is never called.
+### ~~Facilitator peer not reconnected on signalling drop~~ ✓ Fixed in v0.1.1
+`peer.on('disconnected')` now calls `peer.reconnect()`. Recoverable error types (`network`, `server-error`) also trigger reconnect. `peer.on('open')` is guarded so a reconnect re-open doesn't re-enter the game.
 
-### Create button also gets stuck
-`#btn-create` is disabled on click and never re-enabled if PeerJS fails to open. Mirrors the issue fixed in Bug 9 for the join button.
+### ~~Create button also gets stuck~~ ✓ Fixed in v0.1.1
+`#btn-create` is now re-enabled and reset to "+ Create Room" on any fatal peer error. Mirrors the Bug 9 fix for `#btn-join`.
+
+### ~~No mobile-responsive game layout~~ ✓ Fixed in v0.1.1
+`@media (max-width: 768px)` added: `game-grid` collapses to 1 column, sidebar reorders above main, lobby panels stack vertically, vote cards shrink to 52 × 74 px, header wraps.
 
 ### Name collision
 `clientConns[name] = conn` in `handleFacilitatorMessage` overwrites the connection reference if two participants join with the same name. The first person's connection is lost.
-
-### No mobile-responsive game layout
-`game-grid` uses `grid-template-columns: 1fr 272px` with no media query. On narrow phones (< ~420px) the layout overflows horizontally.
 
 ### Timer drift
 Each peer runs its own `setInterval` countdown after the initial SYNC. No re-sync on subsequent SYNCs during a voting round, so timers can drift across devices over a long session.
@@ -114,11 +114,11 @@ All state is in-memory. A page refresh ejects the user from the session. There i
 
 ## 5. Recommended Next Steps
 
-1. **Add facilitator peer reconnection** — `peer.on('disconnected', () => { if (!peer.destroyed) peer.reconnect(); })` keeps the room live through transient signalling drops.
+~~1. Add facilitator peer reconnection~~ ✓ Done (v0.1.1)
 
-2. **Fix the Create button** — Mirror the Bug 9 fix: re-enable `#btn-create` and reset its text in `peer.on('error', ...)` and in a similar connection timeout.
+~~2. Fix the Create button~~ ✓ Done (v0.1.1)
 
-3. **Add responsive layout** — A single `@media (max-width: 640px)` breakpoint that stacks the game grid columns is enough for phone support.
+~~3. Add responsive layout~~ ✓ Done (v0.1.1)
 
 4. **Use a reliable signalling / TURN setup** — Options (all free tier available): self-hosted `peer-server` on Railway/Render, Metered TURN (free quota), or Cloudflare Calls for TURN relay. Configure via the `config.iceServers` option in the `Peer` constructor.
 

@@ -10,6 +10,14 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 ### Added
 - (nothing yet)
 
+## [0.1.1] — 2026-04-24
+
+### Fixed
+- Facilitator peer reconnection: `peer.on('disconnected')` now calls `peer.reconnect()` to survive transient signalling drops; `peer.on('open')` guarded so re-open on reconnect doesn't re-enter the game
+- Recoverable PeerJS error types (`network`, `server-error`) also trigger reconnect with a status indicator; fatal errors toast and re-enable the Create button
+- `#btn-create` re-enabled and reset to "+ Create Room" on any fatal peer error (mirrors the Bug 9 fix for `#btn-join`)
+- Responsive layout: `@media (max-width: 768px)` collapses `game-grid` to a single column, moves sidebar above main, stacks lobby panels vertically, shrinks vote cards to 52 × 74 px, and wraps the header cleanly
+
 ## [0.1.0] — 2026-04-24
 
 Initial working release of Sprint Poker.
@@ -40,5 +48,6 @@ Initial working release of Sprint Poker.
 - Join button permanently stuck on "JOINING…" — all error paths (peer error, connection error, 10 s timeout) now re-enable the button and show a descriptive message
 - PeerJS host errors after lobby was hidden were silently dropped — changed from `showError('create-error', …)` to `toast(…)`
 
-[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/ytap1/SprintPoker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ytap1/SprintPoker/releases/tag/v0.1.0
