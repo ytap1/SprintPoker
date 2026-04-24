@@ -114,8 +114,8 @@ Until TURN credentials are added, symmetric-NAT failures (corporate WiFi, some m
 ### ~~Create button also gets stuck~~ ✓ Fixed in v0.1.1
 `#btn-create` is now re-enabled and reset to "+ Create Room" on any fatal peer error. Mirrors the Bug 9 fix for `#btn-join`.
 
-### ~~No mobile-responsive game layout~~ ✓ Fixed in v0.1.1
-`@media (max-width: 768px)` added: `game-grid` collapses to 1 column, sidebar reorders above main, lobby panels stack vertically, vote cards shrink to 52 × 74 px, header wraps.
+### ~~No mobile-responsive game layout~~ ✓ Fully overhauled in v0.3.0
+Comprehensive mobile audit applied: 44px tap targets on all buttons and inputs; 16px font on inputs prevents iOS auto-zoom; sidebar moves **below** main column; header collapses to room code + phase pill; results stats stack vertically; vote cards get `touch-action: manipulation`. Basic fix was in v0.1.1; full pass in v0.3.0.
 
 ### Name collision
 `clientConns[name] = conn` in `handleFacilitatorMessage` overwrites the connection reference if two participants join with the same name. The first person's connection is lost.
@@ -147,3 +147,5 @@ All state is in-memory. A page refresh ejects the user from the session. There i
 8. **Deploy self-hosted PeerJS server** — Railway or Render, steps in §4 above. Eliminates free-tier rate limiting.
 
 9. **Add TURN credentials** — Metered free tier or Cloudflare Calls. Steps in §4 above. Fixes symmetric-NAT failures.
+
+10. **QR code deployed** (v0.3.0) — facilitator taps the room code badge to open a QR modal; team members scan to auto-fill the join URL; `?code=` URL parameter supported for direct sharing.

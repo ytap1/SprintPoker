@@ -10,6 +10,21 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 ### Added
 - (nothing yet)
 
+## [0.3.0] — 2026-04-24
+
+### Added
+- QR code for room joining: facilitator room-code badge opens a modal with a QR code encoding `https://ytap1.github.io/SprintPoker/?code=SP-XXXXXX`; scanning on mobile pre-fills the room code and focuses the name field
+- `?code=` URL parameter support: opening the join URL directly pre-fills `#join-code` and focuses `#join-name` so mobile users only need to enter their name
+- qrcode.js 1.0.0 via cdnjs (ADR-0007)
+
+### Changed (mobile / responsive overhaul)
+- Header: `#conn-label` and `#my-name-label` hidden on mobile; room code + phase pill remain — fits in one line at 390 px
+- Lobby: `min-height` removed; hero `h1` scales to 24 px; panels full-width with 20 px padding
+- All tap targets set to `min-height: 44px`; form inputs get `font-size: 16px` to prevent iOS auto-zoom on focus
+- Game grid: sidebar (team + backlog) now renders **below** main on mobile (`order: 2`), so the issue card and voting deck are immediately visible after scrolling
+- Vote cards: `52 × 74px`, `gap: 8px`, `touch-action: manipulation` for fast tap response
+- Results: stat boxes stack vertically with label and value in a row; action buttons stack full-width
+
 ## [0.2.0] — 2026-04-24
 
 ### Added
@@ -58,7 +73,8 @@ Initial working release of Sprint Poker.
 - Join button permanently stuck on "JOINING…" — all error paths (peer error, connection error, 10 s timeout) now re-enable the button and show a descriptive message
 - PeerJS host errors after lobby was hidden were silently dropped — changed from `showError('create-error', …)` to `toast(…)`
 
-[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ytap1/SprintPoker/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ytap1/SprintPoker/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/ytap1/SprintPoker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ytap1/SprintPoker/releases/tag/v0.1.0
