@@ -1,24 +1,22 @@
-# Prompts: {{PROJECT_NAME}}
+# Prompts: Sprint Poker
 
-Copy-paste templates for common Claude sessions. Fill the `<...>` slots
-before pasting. Edit as the project matures.
+Copy-paste templates for common Claude sessions. Fill `<...>` slots before pasting.
 
-## Starting a Chat (any concern)
+## Starting a Session
 
 ```
-Concern for this chat: <App Dev | Prompt Refinement | Docs | other>.
+Concern for this chat: <App Dev | Docs | Debugging>.
 Stay in this lane unless I say otherwise.
 
 Before changing anything, read in order:
 1. CLAUDE.md
 2. .ai/context.md
 3. .ai/conventions.md
-4. .ai/decisions.md
 
 Confirm in 3 bullets:
-- current phase + anything known broken
-- the working-model rules that affect today's task
-- two things "Forbidden" prohibits
+- Current phase and anything known broken
+- Working-model rules that affect today's task
+- The two inline-onclick and display-style rules from conventions
 
 Do not write code until I approve. Today's goal: <goal>.
 ```
@@ -29,21 +27,25 @@ Do not write code until I approve. Today's goal: <goal>.
 Feature: <one-sentence description>
 
 User story:
-  As a <role>, I want <capability>, so that <outcome>.
+  As a <facilitator | participant>, I want <capability>, so that <outcome>.
 
 Acceptance criteria:
   - <testable statement>
   - <testable statement>
-  - <error/edge case>
+  - <edge case / error case>
 
-Constraints (from .ai/context.md and .ai/conventions.md):
-  - <project-specific>
+Constraints:
+  - Single index.html — no new files
+  - No new CDN dependencies without an ADR
+  - State mutation → renderAll() → broadcastToClients(SYNC) order
+  - No inline onclick with dynamic values (use addEventListener)
+  - No element.style.display = '' (use explicit value)
 
 Deliver in this order, pause for review after each:
-  1. Plan: files to create/modify, public surface.
+  1. Plan: which functions to add/modify, state changes needed.
   2. Implementation.
-  3. Doc updates (README / context.md / architecture.md as needed).
-  4. Verification: what to check on the deploy preview after push.
+  3. Doc updates (SPRINT_POKER_GUIDE.md FAQ, HANDOVER.md if it fixes a bug).
+  4. What to verify on the deployed preview after push.
 ```
 
 ## Debugging
@@ -56,76 +58,52 @@ Repro:
   2. <observed>
 
 Expected: <what should happen>
-Where seen: <deploy URL / browser / device>
+Where seen: <device / browser>
 
-Relevant files (start here, expand as needed):
-  - <path>
-
-Logs / errors:
-```
-<paste>
-```
+Start with index.html. Investigate thoroughly before touching code.
 
 Do this:
   1. State a hypothesis before reading more code.
   2. Identify the smallest change that confirms or rejects it.
-  3. If it survives, propose the fix and how to verify it on the deploy
-     preview.
-  4. Do not "fix" by widening a try/except or silencing the symptom.
+  3. If it survives, propose the fix and how to verify on the deployed preview.
+  4. Do not fix by silencing the symptom (no empty catch, no hidden errors).
+  5. If buttons are disabled as part of the broken flow, ensure every error path re-enables them.
 ```
 
-## Refactoring
+## Updating Docs After a Fix
 
 ```
-Refactor: <module or pattern>
-Why now: <specific pain — not "feels messy">
+We just fixed: <what broke and what the fix was>.
+
+Update these docs to match current state:
+  - HANDOVER.md: add a "Bug N" entry with function name, root cause, fix
+  - SPRINT_POKER_GUIDE.md: add/update FAQ entry if the fix changes user-visible behaviour
+  - .ai/context.md: update "Known broken" list (remove fixed item, add any new ones found)
+  - CHANGELOG.md: add entry under [Unreleased] → Fixed
+
+Commit with: "docs: <short description>"
+```
+
+## Architecture / Refactor Discussion
+
+```
+Topic: <what to change and why>
+
+Current behaviour: <one paragraph>
+Problem with it: <specific pain — not "feels messy">
 Out of scope: <what must NOT change>
 
-Rules:
-  - Behavior must not change.
-  - One concern per commit.
-  - If a bug surfaces mid-refactor, note it and keep going — fix separately.
+Constraints:
+  - No build step
+  - No new top-level CDN dependencies without an ADR
+  - Facilitator-authoritative state model must be preserved
+  - All changes verifiable on deployed preview
 
-Deliver:
-  1. "Before" sketch (5–10 lines).
-  2. "After" sketch.
-  3. The diff.
-  4. What to spot-check on the deploy preview.
-```
+Give me:
+  1. The proposal (what changes, what stays the same).
+  2. The ADR entry to add to .ai/decisions.md.
+  3. The minimal diff.
+  4. What to verify after deploy.
 
-## Code Review
-
-```
-Review the diff below against .ai/conventions.md and .ai/context.md.
-
-Give me, in order:
-  1. Blocking issues (correctness, security, broken invariants).
-  2. Convention violations with file:line references.
-  3. Suggestions (non-blocking, marked "nit:").
-  4. What's good — at least one thing.
-
-Don't rewrite the code. Point at the line and describe the change in one
-sentence. If a convention is ambiguous, say so and recommend an ADR.
-
-Diff:
-```
-<paste diff or PR link>
-```
-```
-
-## Update Context
-
-```
-We just finished: <what shipped>.
-
-Update .ai/context.md so a fresh chat tomorrow has accurate ground truth:
-  - "Current State" — phase, version, deployed, broken
-  - "Entry Points" — add/remove any new files
-  - "Key Constraints" — any new hard rules from this change
-  - "Last updated" date at the top
-
-If a significant choice was made (new dep, reversed earlier call), add
-an entry to .ai/decisions.md.
-
-Show me the diff before saving.
+Do not implement until I approve the proposal.
 ```

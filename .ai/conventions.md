@@ -1,59 +1,65 @@
-# Conventions: {{PROJECT_NAME}}
+# Conventions: Sprint Poker
 
 Rules Claude must follow when writing code in this repo. When a rule
-conflicts with a framework default, the rule wins — log the exception
-in `.ai/decisions.md`.
+conflicts with a default behaviour, log the exception in `.ai/decisions.md`.
 
-## File Naming
+## File Structure
 
-- Match the language norm (`snake_case.py`, `kebab-case.ts`, etc.).
-- Test files mirror source paths (`foo.py` → `test_foo.py` / `foo.test.ts`).
-- One public export per file when practical.
-- No "utils" / "helpers" / "common" / "misc" modules.
-- Scripts go in `scripts/`, named by verb.
+- Everything lives in `index.html`. Do not create separate JS or CSS files.
+- Documentation goes in `*.md` at repo root or `docs/` or `.ai/`.
+- No `package.json`, no build config, no `node_modules`.
 
-## Code Style
+## JavaScript Style
 
-- **Naming:** functions/vars in language-idiomatic case; `PascalCase` types;
-  `UPPER_SNAKE_CASE` constants; booleans read as predicates (`is_active`).
-- **Types at boundaries** (public functions, HTTP handlers, data models).
-  Inference inside functions is fine.
-- **Errors are values, not control flow.** Raise/throw for truly exceptional
-  states; return a `Result`/tuple for expected failures.
-- **No single-letter names** except loop indices and standard math.
-- **Imports:** stdlib, third-party, local — three groups, alphabetized.
+- **`const` / `let` only.** Never `var`.
+- **Descriptive names.** No single-letter variables except loop indices (`i`, `j`).
+- **Functions over classes.** No ES6 classes needed in this codebase.
+- **Arrow functions** for callbacks and short helpers; named `function` declarations for top-level functions (they hoist, which matters in a single-file app).
 
-## Architecture
+## State and Rendering
 
-- Pure functions where possible; push I/O, time, randomness to the edges.
-- Dependency injection via arguments; no global singletons except config + logger.
-- Project-specific layering (if any) belongs in `.ai/context.md`, not here.
+- **Mutate state first, render after.** Always: update `state.*` → call render function(s) → call `broadcastToClients(SYNC)` if facilitator.
+- **`renderAll()` is the safe default.** Call targeted renders only for performance-sensitive paths (e.g. `renderDeckSelection()` on vote toggle).
+- **Never read from the DOM** to determine app state — always read from `state`.
+
+## DOM Manipulation
+
+- **Never `element.style.display = ''`** to show an element that has `display: none` in CSS. This clears the inline style and falls back to the CSS rule, keeping it hidden. Always set an explicit value: `'block'`, `'flex'`, `'grid'`, etc.
+- **Never inline dynamic values in `onclick` attributes.** Using `JSON.stringify` inside a template literal produces broken HTML when the value is a string (e.g. `onclick="fn("5")"`). Always use `addEventListener` with a closure:
+  ```js
+  btn.addEventListener('click', () => fn(value));
+  ```
+- **Use `esc()` for any user content injected into `innerHTML`** to prevent XSS.
+
+## Networking / PeerJS
+
+- **Facilitator is authoritative.** Only the facilitator mutates shared state. Clients send `JOIN` and `VOTE`; the facilitator broadcasts `SYNC` in response to every state change.
+- **Always broadcast SYNC after any facilitator state change.** If you mutate `state` in a facilitator function and forget to call `broadcastToClients`, clients will desync.
+- **Wrap `conn.send()` in try/catch.** `broadcastToClients` already does this — don't add bare sends elsewhere.
+- **Don't call `renderAll()` before `enterGame()`.** Game DOM elements exist but are hidden; renders succeed silently, but the results are invisible.
+
+## Error Handling
+
+- **User-visible errors go to `showError(id, msg)` or `toast(msg)`.**
+  - `showError`: use when the lobby is visible (pre-join errors).
+  - `toast`: use when the game screen is active (post-join errors).
+- **Always re-enable buttons on failure.** If a button is disabled while an async operation runs, every error path must re-enable it. Never leave the user stuck.
+- **Don't catch bare errors silently.** `catch(e) {}` is only acceptable in `broadcastToClients` where one broken connection must not stop the others.
 
 ## Forbidden
 
-Do not do these without first updating `.ai/decisions.md`.
+Do not do these without first updating `.ai/decisions.md`:
 
-- `TODO` / `FIXME` without a linked issue.
-- `print()` / `console.log()` in checked-in code — use the logger.
-- Catching bare `Exception` / `catch (e)` without re-raising or handling
-  a specific type.
-- Adding a new top-level dependency.
-- Disabling a test silently. Fix it or delete it.
-- Committing generated files (other than lockfiles).
-- Committing secrets. Use the project's env var mechanism.
-- CLI instructions in docs (the user has no terminal — see `.ai/context.md`
-  → Working Model).
+- Adding a new CDN dependency (new `<script src="...">` tag).
+- `console.log` in code considered stable (debug logs are fine during active work — remove before marking stable).
+- Inline `onclick` with dynamic values (see DOM Manipulation above).
+- `element.style.display = ''` to show elements (see DOM Manipulation above).
+- CLI instructions in docs — the user has no terminal.
 
 ## When Adding New Code
 
-1. **Belongs in an existing module?** Prefer extending over creating.
-2. **Has a test (where the project has tests)?** New logic needs one that
-   would fail without the change.
-3. **Types / schemas updated?**
-4. **Docs updated?** If public-facing behavior changed: `README.md`,
-   `.ai/context.md`, or `docs/`.
-5. **Verifiable on the deploy preview?** The user can't run anything
-   locally — if the change isn't observable on the deployed site or via
-   CI, say so explicitly.
-6. **Diff minimal?** No drive-by renames, no unrelated formatting.
-7. **Removed what you replaced?** No dead code, no commented-out blocks.
+1. Does it mutate state? Follow the mutate → render → broadcast order.
+2. Does it touch the DOM? Check the display-value and inline-onclick rules above.
+3. Does it add a failure path? Ensure the user gets feedback and any disabled buttons are re-enabled.
+4. Is public-facing behaviour changing? Update `SPRINT_POKER_GUIDE.md` FAQ and `HANDOVER.md` if it fixes a known bug.
+5. Diff minimal — no drive-by renames, no unrelated formatting.

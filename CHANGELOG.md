@@ -1,34 +1,44 @@
 # Changelog
 
-All notable changes to {{PROJECT_NAME}} will be documented here.
+All notable changes to Sprint Poker will be documented here.
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
-
-Categories: **Added**, **Changed**, **Deprecated**, **Removed**, **Fixed**, **Security**.
 
 ## [Unreleased]
 
 ### Added
 - (nothing yet)
 
-### Changed
-- (nothing yet)
+## [0.1.0] — 2026-04-24
 
-### Fixed
-- (nothing yet)
-
-## [0.1.0] — {{CURRENT_DATE}}
-
-Initial scaffold. No runtime code — establishes the docs and structure
-Claude Code needs to work effectively in this repo.
+Initial working release of Sprint Poker.
 
 ### Added
-- `CLAUDE.md` — entry point for Claude Code.
-- `.ai/context.md`, `.ai/conventions.md`, `.ai/decisions.md`,
-  `.ai/prompts.md`, `.ai/metrics.md`.
-- `README.md`, `docs/workflow.md`, `docs/architecture.md`.
-- `.gitignore`, `CHANGELOG.md`.
+- Single-file app (`index.html`) — CSS, HTML, and JS inline, no build step
+- Real-time multiplayer via PeerJS 1.5.4 WebRTC data channels
+- Facilitator role: create room, manage backlog, start voting, reveal cards, accept points
+- Participant role: join by room code, cast and retract votes, see live results
+- Fibonacci deck (1, 2, 3, 5, 8, 13, 21, ?, ☕) and T-Shirt deck (XS, S, M, L, XL, XXL, ?, ☕)
+- Configurable per-round countdown timer (30 s – 3 min)
+- Backlog panel: add issues manually or import from CSV
+- Reveal phase: average, consensus indicator, vote distribution bar chart
+- Done phase: completion screen after last issue is estimated
+- `resetSession()`: facilitator can restart the session without leaving the room
+- Join Room 10-second timeout with clear error message and button recovery
+- Connection status indicator (connecting / connected / disconnected) in header
+- Room code click-to-copy
+- Phase pill in header (waiting / voting / revealed / done)
+- `HANDOVER.md`, `SPRINT_POKER_GUIDE.md`, `.ai/` documentation
 
-[Unreleased]: https://github.com/<org>/{{PROJECT_NAME}}/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/<org>/{{PROJECT_NAME}}/releases/tag/v0.1.0
+### Fixed
+- Blank game screen after creating a room (`display: ''` fell back to CSS `display: none` — fixed to `display: 'block'`)
+- Results panel never visible after reveal (same root cause, same fix)
+- Race condition: room code shown before PeerJS peer ID was registered, causing `peer-unavailable` for fast joiners — `enterGame()` restored inside `peer.on('open')`
+- No done phase when backlog exhausted — `nextIssue()` else branch now sets `gamePhase = 'done'` before `renderAll()`
+- Accept & Next button did nothing on the last issue — `JSON.stringify(suggestedPts)` inside a template literal produced `onclick="nextIssue("5")"`, breaking the HTML attribute; fixed using `addEventListener` with a closure
+- Join button permanently stuck on "JOINING…" — all error paths (peer error, connection error, 10 s timeout) now re-enable the button and show a descriptive message
+- PeerJS host errors after lobby was hidden were silently dropped — changed from `showError('create-error', …)` to `toast(…)`
+
+[Unreleased]: https://github.com/ytap1/SprintPoker/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ytap1/SprintPoker/releases/tag/v0.1.0

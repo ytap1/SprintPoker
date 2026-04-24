@@ -1,44 +1,94 @@
-# {{PROJECT_NAME}}
+# Sprint Poker
 
-> {{PROJECT_DESCRIPTION}}
+> Real-time planning poker for agile sprint estimation — no account, no server, just share the code.
+
+## What It Is
+
+Sprint Poker is a serverless, browser-based planning poker tool. One person creates a room as facilitator and gets a short room code (`SP-XXXXXX`). The rest of the team joins on their own devices by entering that code. Everyone votes simultaneously on story point estimates; the facilitator reveals votes, accepts a value, and the session advances to the next issue. All communication is peer-to-peer via WebRTC — no backend required.
 
 ## Status
 
-- **Phase:** pre-alpha
-- **Version:** 0.1.0 (see [CHANGELOG.md](./CHANGELOG.md))
+- **Phase:** alpha
+- **Version:** 0.1.0
 - **Last updated:** 2026-04-24
-- **Deployed?** Yes — GitHub Pages.
+- **Deployed:** Yes — [GitHub Pages](https://ytap1.github.io/SprintPoker/)
 
-## How Work Happens Here
+## How to Use
 
-- Edits via Claude Code (GitHub integration) or the GitHub web editor on Safari.
-- No local dev, no terminal, no package managers — never assume them.
-- Push directly to `main` by default. Branch only for destructive or high-risk changes.
-- Deploy is auto-triggered on push to `main` (GitHub Pages or Netlify, per project).
-- Verification happens on the deployed preview, not on a localhost.
+See [SPRINT_POKER_GUIDE.md](./SPRINT_POKER_GUIDE.md) for the full guide, including:
 
-See [docs/workflow.md](./docs/workflow.md) for the full working model.
+- How to create and share a room
+- How to import a backlog from CSV
+- Voting, revealing, accepting points, and re-voting
+- What happens at the end of the backlog
+- FAQ
 
-## What Works
+Quick version:
 
-- Real-time planning poker — create room, share code, vote, reveal, repeat.
-- Fibonacci and T-Shirt decks, configurable timer, CSV backlog import.
-- Accept & Next end-of-backlog flow is stable — completion screen and session reset.
-- Join Room error handling — 10s timeout, clear messages, button recovery on failure.
+1. Open the app URL in any modern browser.
+2. **Facilitator:** enter your name, pick a deck and timer, click **+ Create Room**. Share the code in the header with your team.
+3. **Team:** open the same URL, enter your name and the room code, click **→ Join Room**.
+4. Facilitator clicks an issue in the backlog → voting starts → team picks cards → facilitator reveals → accept or re-vote → repeat.
 
-## What's Next
+## Tech Stack
 
-- [ ] Pick the stack and fill in `.ai/context.md` (`{{TECH_STACK}}`).
-- [ ] First end-to-end feature slice, deployed.
+| Layer | Detail |
+|---|---|
+| App | Single `index.html` — CSS, HTML, and JS inline. No build step. |
+| Multiplayer | PeerJS 1.5.4 (WebRTC data channels via CDN) |
+| Signalling | PeerJS free cloud (`0.peerjs.com`) |
+| Hosting | GitHub Pages — auto-deploys on push to `main` |
+
+## How to Deploy Your Own Copy
+
+1. Fork this repo on GitHub.
+2. Go to **Settings → Pages** → set Source to `main` branch, root folder.
+3. Push any change to `main` — GitHub Pages will build and serve `index.html` automatically.
+4. Share the Pages URL with your team.
+
+No config files, no environment variables, no build commands needed.
+
+## How to Contribute
+
+This project follows a no-terminal, no-build-step workflow. Changes are made via Claude Code or the GitHub web editor and pushed directly to `main`.
+
+Before making changes, read:
+
+1. [CLAUDE.md](./CLAUDE.md) — working model and coding rules
+2. [.ai/context.md](./.ai/context.md) — current state and constraints
+3. [.ai/conventions.md](./.ai/conventions.md) — specific rules for this codebase
+4. [.ai/decisions.md](./.ai/decisions.md) — why key choices were made
+
+Key rules:
+- Everything lives in `index.html`. Do not create separate JS or CSS files.
+- Never use `element.style.display = ''` to reveal elements — always set an explicit value.
+- Never put dynamic JS values in inline `onclick` attributes — use `addEventListener` with a closure.
+- State mutation always precedes rendering and broadcasting.
+
+## Known Limitations
+
+- Host tab must stay open — closing it ends the session for everyone.
+- PeerJS free cloud broker can be unreliable under load or rate limits.
+- No TURN server — connections may fail across strict corporate or carrier NATs.
+- No session persistence — a page refresh ejects you from the session.
+
+## Roadmap
+
+See [.ai/context.md — Roadmap](./.ai/context.md) for the full list. Near-term priorities:
+
+- Facilitator peer reconnection on signalling drop
+- Responsive layout for phones
+- Self-hosted PeerJS signalling server
+- Export estimated backlog to CSV
 
 ## Documentation
 
-- [CLAUDE.md](./CLAUDE.md) — read first; how Claude should work in this repo
-- [.ai/context.md](./.ai/context.md) — what this is, current state, constraints
-- [.ai/conventions.md](./.ai/conventions.md) — coding rules
-- [.ai/decisions.md](./.ai/decisions.md) — ADRs
-- [.ai/prompts.md](./.ai/prompts.md) — prompt templates
-- [.ai/metrics.md](./.ai/metrics.md) — AI-assist log
-- [docs/workflow.md](./docs/workflow.md) — working model + deploy
-- [docs/architecture.md](./docs/architecture.md) — structure + data flow
-- [CHANGELOG.md](./CHANGELOG.md) — release history
+| File | Purpose |
+|---|---|
+| [SPRINT_POKER_GUIDE.md](./SPRINT_POKER_GUIDE.md) | End-user guide and FAQ |
+| [HANDOVER.md](./HANDOVER.md) | Bug log and technical handover notes |
+| [CHANGELOG.md](./CHANGELOG.md) | Version history |
+| [CLAUDE.md](./CLAUDE.md) | Claude Code instructions and coding conventions |
+| [.ai/context.md](./.ai/context.md) | Project context for AI sessions |
+| [.ai/decisions.md](./.ai/decisions.md) | Architectural decision records |
+| [docs/architecture.md](./docs/architecture.md) | Data flow and component structure |
