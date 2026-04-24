@@ -450,6 +450,23 @@ main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
 /* empty state */
 .empty { text-align: center; color: var(--muted); font-size: 12px; padding: 16px 0; font-style: italic; }
 
+/* ── RESPONSIVE ───────────────────────────────── */
+@media (max-width: 768px) {
+  main { padding: 20px 16px; }
+
+  #app-header { padding: 10px 16px; flex-wrap: wrap; gap: 8px; }
+  .header-right { flex-wrap: wrap; gap: 8px; }
+
+  .lobby-panels { flex-direction: column; align-items: stretch; }
+  .panel { width: 100%; }
+
+  .game-grid { grid-template-columns: 1fr; }
+  .game-col-side { order: -1; }
+
+  .vote-card { width: 52px; height: 74px; font-size: 16px; }
+  .vote-card.special { font-size: 12px; }
+}
+
 /* toast */
 #toast {
   position: fixed;
@@ -675,7 +692,7 @@ function hostRoom(name, deck, timer) {
   peer = new Peer(state.roomCode, { debug: 0 });
   peer.on('open', () => {
     setConnStatus('connected');
-    enterGame();
+    if (state.phase !== 'game') enterGame();
   });
   peer.on('connection', conn => {
     conn.on('open', () => {
@@ -699,7 +716,23 @@ function hostRoom(name, deck, timer) {
     });
     conn.on('error', () => {});
   });
-  peer.on('error', e => toast('Connection error: ' + e.type));
+  peer.on('disconnected', () => {
+    if (!peer.destroyed) {
+      setConnStatus('connecting');
+      peer.reconnect();
+    }
+  });
+  peer.on('error', e => {
+    const recoverable = ['network', 'server-error'];
+    if (recoverable.includes(e.type) && !peer.destroyed) {
+      toast('Connection issue (' + e.type + '). Reconnecting...');
+      setConnStatus('connecting');
+      peer.reconnect();
+    } else {
+      toast('Connection error: ' + e.type);
+      resetCreateBtn();
+    }
+  });
 }
 
 /* ── Client: join ── */
@@ -707,6 +740,12 @@ function resetJoinBtn() {
   const btn = document.getElementById('btn-join');
   btn.disabled = false;
   btn.textContent = '→ Join Room';
+}
+
+function resetCreateBtn() {
+  const btn = document.getElementById('btn-create');
+  btn.disabled = false;
+  btn.textContent = '+ Create Room';
 }
 
 function joinRoom(name, code) {
