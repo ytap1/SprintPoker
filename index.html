@@ -630,6 +630,9 @@ main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
               <input type="file" id="csv-file-input" accept=".csv,text/csv" />
               ↑ Drop CSV or click to import issues
             </div>
+            <div id="export-row" class="hidden" style="margin-top:8px">
+              <button class="btn-secondary" id="btn-export-csv" style="width:100%">↓ Export Results CSV</button>
+            </div>
           </div>
         </div>
       </div>
@@ -640,6 +643,36 @@ main { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
 <div id="toast"></div>
 
 <script>
+/* ═══════════════════════════════════════════════
+   CONFIG — edit here to switch servers or add TURN
+   ───────────────────────────────────────────────
+   Signalling server
+     null  → PeerJS free cloud (0.peerjs.com) — default, no setup needed
+     object → self-hosted peer-server (Railway / Render free tier)
+              Example: { host: 'your-app.railway.app', port: 443, path: '/', secure: true }
+
+   ICE / TURN servers
+     Google STUN ships by default. Add TURN credentials to fix
+     symmetric-NAT failures (corporate WiFi, some mobile carriers).
+     Metered free tier: https://www.metered.ca/tools/openrelay/
+     Cloudflare Calls: https://developers.cloudflare.com/calls/turn/
+═══════════════════════════════════════════════ */
+const PEER_CONFIG = {
+  signalling: null,
+  // signalling: { host: 'your-app.railway.app', port: 443, path: '/', secure: true },
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    // { urls: 'turn:relay.metered.ca:80',   username: 'YOUR_USER', credential: 'YOUR_CRED' },
+    // { urls: 'turns:relay.metered.ca:443', username: 'YOUR_USER', credential: 'YOUR_CRED' },
+  ],
+};
+
+function buildPeerOpts() {
+  const opts = { debug: 0, config: { iceServers: PEER_CONFIG.iceServers } };
+  if (PEER_CONFIG.signalling) Object.assign(opts, PEER_CONFIG.signalling);
+  return opts;
+}
+
 /* ═══════════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════════ */
@@ -689,7 +722,7 @@ function hostRoom(name, deck, timer) {
   state.roomCode = genCode();
   state.participants[name] = { isFacilitator: true };
 
-  peer = new Peer(state.roomCode, { debug: 0 });
+  peer = new Peer(state.roomCode, buildPeerOpts());
   peer.on('open', () => {
     setConnStatus('connected');
     if (state.phase !== 'game') enterGame();
@@ -759,7 +792,7 @@ function joinRoom(name, code) {
     resetJoinBtn();
   }, 10000);
 
-  peer = new Peer(undefined, { debug: 0 });
+  peer = new Peer(undefined, buildPeerOpts());
   peer.on('open', () => {
     facilitatorConn = peer.connect(code, { reliable: true });
     facilitatorConn.on('open', () => {
@@ -958,6 +991,29 @@ function addIssue(title) {
   broadcastToClients({ type: 'SYNC', payload: getSyncPayload() });
 }
 
+function exportCSV() {
+  const rows = [['#', 'Title', 'Points']];
+  state.issues.forEach((issue, idx) => {
+    const pts = issue.points != null ? issue.points : '';
+    rows.push([idx + 1, issue.title, pts]);
+  });
+  const csv = rows.map(r =>
+    r.map(cell => {
+      const s = String(cell);
+      return /[,"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',')
+  ).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sprint-results-' + state.roomCode + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function importCSV(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   let added = 0;
@@ -1128,6 +1184,8 @@ function renderBacklog() {
   const done = state.issues.filter(i => i.points != null).length;
   progress.textContent = `${done}/${state.issues.length}`;
   facControls.classList.toggle('hidden', !state.isFacilitator);
+  const exportRow = document.getElementById('export-row');
+  if (exportRow) exportRow.classList.toggle('hidden', !state.issues.some(i => i.points != null));
 
   if (!state.issues.length) { list.innerHTML = '<div class="empty">No issues yet</div>'; return; }
   list.innerHTML = state.issues.map((issue, idx) => {
@@ -1327,6 +1385,9 @@ document.getElementById('join-code').addEventListener('keydown', e => {
 document.getElementById('join-code').addEventListener('input', e => {
   e.target.value = e.target.value.toUpperCase();
 });
+
+// Export CSV
+document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
 
 // Copy room code
 document.getElementById('header-room-code').addEventListener('click', () => {

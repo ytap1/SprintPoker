@@ -111,6 +111,35 @@ The facilitator's browser is the single source of truth. Clients send `JOIN` and
 
 ---
 
+## ADR-0006: Configurable PeerJS signalling server and TURN relay
+
+- **Date:** 2026-04-24
+- **Status:** Accepted
+
+### Context
+
+The PeerJS free cloud (`0.peerjs.com`) is rate-limited and occasionally unavailable. Additionally, PeerJS defaults to Google STUN only, which fails silently on symmetric NATs (corporate WiFi, some mobile carriers). Both issues block reliable use in a team setting.
+
+### Decision
+
+Add a top-of-file `PEER_CONFIG` object that centralises signalling host settings and the `iceServers` array. A `buildPeerOpts()` helper converts `PEER_CONFIG` into the options object passed to the `Peer` constructor, replacing the hardcoded `{ debug: 0 }` in both `hostRoom()` and `joinRoom()`.
+
+- **Signalling**: `PEER_CONFIG.signalling` is `null` by default (uses PeerJS free cloud). Set it to `{ host, port, path, secure }` to point at a self-hosted server (Railway or Render free tier — see HANDOVER.md §4 for deployment steps).
+- **TURN**: `PEER_CONFIG.iceServers` ships with Google STUN only. TURN credentials (Metered free tier or Cloudflare Calls) are plugged in here — see HANDOVER.md §5 for how to wire them in.
+
+### Alternatives Considered
+
+- **Hardcode the self-hosted URL:** simpler but requires a find-and-replace if the server moves.
+- **Environment variable at build time:** not viable — there is no build step (ADR-0002).
+
+### Consequences
+
+- **Positive:** server URL and ICE config are in one place; no hunting through the code; switching from free cloud to self-hosted is a 3-line change.
+- **Negative:** none. Behaviour is identical when `PEER_CONFIG.signalling` is `null`.
+- **Follow-ups:** deploy a self-hosted `peer-server` on Railway/Render and populate `PEER_CONFIG.signalling`. Add TURN credentials to `PEER_CONFIG.iceServers` for symmetric-NAT support.
+
+---
+
 ## ADR-0005: addEventListener over inline onclick for dynamic values
 
 - **Date:** 2026-04-24
