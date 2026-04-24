@@ -6,8 +6,8 @@
 
 - **Phase:** pre-alpha
 - **Version:** 0.1.0 (see [CHANGELOG.md](./CHANGELOG.md))
-- **Last updated:** {{CURRENT_DATE}}
-- **Deployed?** No.
+- **Last updated:** 2026-04-24
+- **Deployed?** Yes — GitHub Pages.
 
 ## How Work Happens Here
 
@@ -21,10 +21,10 @@ See [docs/workflow.md](./docs/workflow.md) for the full working model.
 
 ## What Works
 
-- AI-first docs in [`.ai/`](./.ai/).
-- `CHANGELOG.md`, `docs/`, `.gitignore` scaffolding.
-
-Replace this with real shipped features as they land.
+- Real-time planning poker — create room, share code, vote, reveal, repeat.
+- Fibonacci and T-Shirt decks, configurable timer, CSV backlog import.
+- Accept & Next end-of-backlog flow is stable — completion screen and session reset.
+- Join Room error handling — 10s timeout, clear messages, button recovery on failure.
 
 ## What's Next
 

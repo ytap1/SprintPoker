@@ -109,6 +109,9 @@ No. Just the URL and the room code.
 - The facilitator must have their tab open — the room only exists while they're connected
 - Try refreshing and joining again
 
+**Q: What happens after the last issue is estimated?**
+A completion screen appears showing all issues are done. The facilitator can click **Start New Session** to reset and re-estimate all issues from scratch. Team members see a "Session complete" message automatically.
+
 **Q: Can I re-estimate an issue?**
 Yes — facilitator can click any completed issue in the backlog and restart voting.
 
