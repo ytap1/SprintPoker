@@ -7,8 +7,9 @@ Versioning: [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Added
-- (nothing yet)
+### Fixed
+- Name collision guard: facilitator rejects `JOIN` if name already exists in `state.participants`; sends `JOIN_ERROR` back to client; client bounces to lobby with a descriptive error message
+- Clipboard false-positive: "✓ Copied!" now only fires on actual clipboard write success; failure shows "✗ Failed" for 2 seconds; feedback chained inside `.then()`/`.catch()` instead of running synchronously
 
 ## [0.3.1] — 2026-04-24
 
