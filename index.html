@@ -937,6 +937,10 @@ function joinRoom(name, code) {
 function handleFacilitatorMessage(conn, msg) {
   if (msg.type === 'JOIN') {
     const { name } = msg.payload;
+    if (state.participants[name]) {
+      conn.send({ type: 'JOIN_ERROR', payload: { reason: 'That name is already taken. Choose a different name and try again.' } });
+      return;
+    }
     clientConns[name] = conn;
     state.participants[name] = { isFacilitator: false };
     if (!state.votes[name]) state.votes[name] = null;
@@ -957,6 +961,16 @@ function handleFacilitatorMessage(conn, msg) {
 function handleClientMessage(msg) {
   if (msg.type === 'SYNC') {
     applySync(msg.payload);
+  }
+  if (msg.type === 'JOIN_ERROR') {
+    if (peer && !peer.destroyed) peer.destroy();
+    state.phase = 'lobby';
+    document.getElementById('game').style.display = 'none';
+    document.getElementById('lobby').style.display = 'flex';
+    document.getElementById('header-lobby-info').classList.remove('hidden');
+    document.getElementById('header-game-info').classList.add('hidden');
+    showError('join-error', msg.payload.reason);
+    resetJoinBtn();
   }
 }
 
@@ -1535,12 +1549,16 @@ document.getElementById('qr-overlay').addEventListener('click', () =>
   document.getElementById('qr-modal').classList.add('hidden'));
 
 // QR modal copy join link
-document.getElementById('qr-copy-link').addEventListener('click', () => {
+document.getElementById('qr-copy-link').addEventListener('click', (e) => {
   const url = document.getElementById('qr-url-text').textContent;
-  navigator.clipboard.writeText(url).catch(() => {});
-  const btn = document.getElementById('qr-copy-link');
-  btn.textContent = '✓ Copied!';
-  setTimeout(() => { btn.textContent = 'Copy Join Link'; }, 2000);
+  const btn = e.currentTarget;
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = 'Copy Join Link'; }, 2000);
+  }).catch(() => {
+    btn.textContent = '✗ Failed';
+    setTimeout(() => { btn.textContent = 'Copy Join Link'; }, 2000);
+  });
 });
 
 // Pre-fill join code from ?code= URL parameter (QR scan entry point)
